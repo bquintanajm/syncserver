@@ -1,0 +1,27 @@
+version: "3.1"
+services:
+  syncserver:
+    build: .
+    restart: always
+    depends_on:
+      - "msdb"
+    image: syncserver:latest
+    entrypoint: /usr/local/bin/gunicorn --bind 0.0.0.0:5000 syncserver.wsgi_app
+    ports:
+      - 5000:5000
+    environment:
+      - SYNCSERVER_PUBLIC_URL=https://<server>:<port>/<path>
+      - SYNCSERVER_SECRET=<secret>
+      - SYNCSERVER_SQLURI=postgresql://<dbuser>:<dbpassword>@msdb/<dbname>
+      - SYNCSERVER_BATCH_UPLOAD_ENABLED=true
+      - SYNCSERVER_FORCE_WSGI_ENVIRON=true
+  msdb:
+    restart: always
+    image: postgres:10.3
+    volumes:
+      - <local-path>/data:/var/lib/postgresql/data
+      - <local-path>/logs:/logs
+    environment:
+      - POSTGRES_DB=<dbname>
+      - POSTGRES_USER=<dbuser>
+      - POSTGRES_PASSWORD=<dbpassword>
