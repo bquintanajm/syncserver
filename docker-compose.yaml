@@ -1,0 +1,29 @@
+version: "3.1"
+services:
+  syncserver:
+    build: .
+    restart: always
+    depends_on:
+      - "msdb"      
+    image: syncserver:latest
+    entrypoint: /usr/local/bin/gunicorn --bind 0.0.0.0:5000 syncserver.wsgi_app
+    ports:
+      - 5000:5000
+    environment:
+      - SYNCSERVER_PUBLIC_URL=https://<server>:<port>/<path>
+      - SYNCSERVER_SECRET=<secret>
+      - SYNCSERVER_SQLURI=pymysql://<dbuser>:<dbpassword>@msdb/<dbname>
+      - SYNCSERVER_BATCH_UPLOAD_ENABLED=true
+      - SYNCSERVER_FORCE_WSGI_ENVIRON=true
+  msdb:
+    restart: always  
+    image: mariadb:10.3
+    volumes:
+      - <local-path>:/var/lib/mysql  
+    environment:
+      MYSQL_ROOT_PASSWORD: <root-password>
+      MYSQL_DATABASE: <dbname>
+      MYSQL_USER: <dbuser>
+      MYSQL_PASSWORD: <dbpassword>
+    # This command is required to set important mariadb defaults
+    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --wait_timeout=28800]
